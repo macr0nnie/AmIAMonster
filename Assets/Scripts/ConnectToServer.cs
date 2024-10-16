@@ -17,10 +17,8 @@ public class ConnectToServer : MonoBehaviourPunCallbacks
             PhotonNetwork.NickName = usernameInput.text; //sets the photn
             buttonText.text = "Connecting...";
             PhotonNetwork.ConnectUsingSettings();   
+            print(PhotonNetwork.NickName);
         }
     }
-    public override void OnConnectedToMaster(){
-        SceneManager.LoadScene("Lobby");
-    }
-
+  
 }
