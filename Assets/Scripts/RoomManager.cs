@@ -133,5 +133,19 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         UpdateUI();
     }
+
+    public void StartGame()
+{
+    if (PhotonNetwork.IsMasterClient)
+    {
+        // Close the room to prevent new players from joining
+        PhotonNetwork.CurrentRoom.IsOpen = false;
+        PhotonNetwork.CurrentRoom.IsVisible = false;
+
+        // Load the game scene for all players in the room
+        PhotonNetwork.LoadLevel("Game");
+    }
 }
+}
+
 
