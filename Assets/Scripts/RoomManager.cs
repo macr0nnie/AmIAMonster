@@ -16,7 +16,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public Button joinRoomButton;
     public TMP_InputField joinCodeInput;
     public TextMeshProUGUI roomCodeText;
-    public Button startGameButton; //allow the host to start the game deactivate when done
+    public Button startGameButton;
 
     private void Start()
     {
@@ -29,6 +29,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // Set up button listeners
         createRoomButton.onClick.AddListener(CreateRoom);
         joinRoomButton.onClick.AddListener(() => JoinRoomWithCode(joinCodeInput.text));
+        startGameButton.onClick.AddListener(StartGame);
 
         // Initialize UI state
         UpdateUI();
@@ -43,27 +44,24 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // Called when successfully connected to the Photon server
     public override void OnConnectedToMaster()
     {
         Debug.Log("Connected to Photon server");
         PhotonNetwork.JoinLobby();
     }
 
-    // Called when successfully joined the Photon lobby
     public override void OnJoinedLobby()
     {
         Debug.Log("Joined Photon lobby");
         UpdateUI();
     }
 
-    // Create a new room with a random join code
     public void CreateRoom()
     {
         string joinCode = GenerateJoinCode();
         RoomOptions roomOptions = new RoomOptions
         {
-            MaxPlayers = 6, // Customize: Set the maximum number of players
+            MaxPlayers = 6,
             CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { JoinCodeKey, joinCode } },
             CustomRoomPropertiesForLobby = new string[] { JoinCodeKey }
         };
@@ -71,7 +69,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CreateRoom(joinCode, roomOptions);
     }
 
-    // Attempt to join a room using the provided join code
     public void JoinRoomWithCode(string joinCode)
     {
         if (string.IsNullOrEmpty(joinCode) || joinCode.Length != JoinCodeLength)
@@ -83,7 +80,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinRoom(joinCode);
     }
 
-    // Generate a random join code
     private string GenerateJoinCode()
     {
         const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -91,7 +87,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
             .Select(s => s[Random.Range(0, s.Length)]).ToArray());
     }
 
-    // Called when successfully joined a room
     public override void OnJoinedRoom()
     {
         Debug.Log("Joined room: " + PhotonNetwork.CurrentRoom.Name);
@@ -101,21 +96,20 @@ public class RoomManager : MonoBehaviourPunCallbacks
         UpdateUI();
     }
 
-    // Called when failed to join a room
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
         Debug.LogError("Failed to join room: " + message);
     }
 
-    // Update UI elements based on current connection state
     private void UpdateUI()
     {
         bool inRoom = PhotonNetwork.InRoom;
         bool inLobby = PhotonNetwork.InLobby;
 
-        createRoomButton.interactable = inLobby && !inRoom;
-        joinRoomButton.interactable = inLobby && !inRoom;
-        joinCodeInput.interactable = inLobby && !inRoom;
+        //createRoomButton.interactable = inLobby && !inRoom;
+        //joinRoomButton.interactable = inLobby && !inRoom;
+        //joinCodeInput.interactable = inLobby && !inRoom;
+        startGameButton.gameObject.SetActive(inRoom && PhotonNetwork.IsMasterClient);
 
         if (inRoom)
         {
@@ -124,28 +118,27 @@ public class RoomManager : MonoBehaviourPunCallbacks
         }
         else
         {
-            roomCodeText.text = "Join a Game!";
+            roomCodeText.text = "Not in a room";
         }
     }
 
-    // Called when the player leaves a room
     public override void OnLeftRoom()
     {
         UpdateUI();
     }
 
     public void StartGame()
-{
-    if (PhotonNetwork.IsMasterClient)
     {
-        // Close the room to prevent new players from joining
-        PhotonNetwork.CurrentRoom.IsOpen = false;
-        PhotonNetwork.CurrentRoom.IsVisible = false;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            PhotonNetwork.CurrentRoom.IsOpen = false;
+            PhotonNetwork.CurrentRoom.IsVisible = false;
+            PhotonNetwork.LoadLevel("Game");
+        }
+    }
 
-        // Load the game scene for all players in the room
-        PhotonNetwork.LoadLevel("Game");
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        UpdateUI();
     }
 }
-}
-
-

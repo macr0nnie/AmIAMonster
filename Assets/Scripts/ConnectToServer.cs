@@ -43,11 +43,12 @@ public class ConnectToServer : MonoBehaviourPunCallbacks
         if (configured_name == true)
         {
             Debug.Log("Connected to Photon Master Server");
-            SceneManager.LoadScene("Lobby");
+            PhotonNetwork.LoadLevel("Lobby");
         }
         else
         {
             Debug.Log("Name not configured");
+
         }
 
     }
