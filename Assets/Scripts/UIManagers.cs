@@ -1,38 +1,46 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
+using System;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [Header("Panels")]
-    public GameObject startPanel;
-    public GameObject questionPanel;
-    public GameObject answerPanel;
-    public GameObject guessSelectionPanel;
-    public GameObject characterGridPanel;
+    [System.Serializable]
+    private class UIPanel
+    {
+        public string name;
+        public GameObject panel;
+    }
 
-    [Header("Input Fields")]
-    public TMP_InputField questionInput;
+    [SerializeField] private List<UIPanel> uiPanels = new List<UIPanel>();
 
-    [Header("Text Displays")]
-    public TMP_Text currentPlayerText;
-    public TMP_Text questionDisplayText;
-    public TMP_Text timerText;
+    [Header("Common UI Elements")]
+    [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private TextMeshProUGUI stateText;
 
-    [Header("Buttons")]
-    public Button submitQuestionButton;
-    public Button yesButton;
-    public Button noButton;
-    public Button makeGuessButton;
+    [Header("Character Selection")]
+    [SerializeField] private TMP_Dropdown characterDropdown;
 
-    [Header("Character Grid")]
-    public GameObject characterPrefab;
-    public Transform characterGridContainer;
+    [Header("Question Panel")]
+    [SerializeField] private TMP_InputField questionInput;
+    [SerializeField] private Button submitQuestionButton;
 
-    private Dictionary<string, GameObject> characterUIElements = new Dictionary<string, GameObject>();
+    [Header("Answer Panel")]
+    [SerializeField] private TextMeshProUGUI questionText;
+    [SerializeField] private Button yesButton;
+    [SerializeField] private Button noButton;
+
+    [Header("Results Panel")]
+    [SerializeField] private TextMeshProUGUI resultsText;
+
+    [Header("Guess Panel")]
+    [SerializeField] private TMP_InputField guessInput;
+    [SerializeField] private Button submitGuessButton;
+
+    private Dictionary<string, GameObject> panelDictionary = new Dictionary<string, GameObject>();
 
     private void Awake()
     {
@@ -40,6 +48,7 @@ public class UIManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            InitializePanelDictionary();
         }
         else
         {
@@ -47,85 +56,110 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowPanel(GameObject panel)
+    private void InitializePanelDictionary()
     {
-        startPanel.SetActive(panel == startPanel);
-        questionPanel.SetActive(panel == questionPanel);
-        answerPanel.SetActive(panel == answerPanel);
-        guessSelectionPanel.SetActive(panel == guessSelectionPanel);
-        characterGridPanel.SetActive(panel == characterGridPanel);
-    }
-
-    public void UpdateCurrentPlayerText(string playerName)
-    {
-        currentPlayerText.text = $"Current Player: {playerName}";
-    }
-
-    public void DisplayQuestion(string question)
-    {
-        questionDisplayText.text = question;
-    }
-
-    public void UpdateTimer(float timeLeft)
-    {
-        timerText.text = $"Time: {Mathf.CeilToInt(timeLeft)}";
-    }
-
-    public void PopulateCharacterGrid(List<Character> characters)
-    {
-        foreach (Transform child in characterGridContainer)
+        foreach (var uiPanel in uiPanels)
         {
-            Destroy(child.gameObject);
-        }
-        characterUIElements.Clear();
-
-        foreach (var character in characters)
-        {
-            GameObject charObj = Instantiate(characterPrefab, characterGridContainer);
-            CharacterUI charUI = charObj.GetComponent<CharacterUI>();
-            charUI.Initialize(character);
-            characterUIElements[character.Name] = charObj;
+            panelDictionary[uiPanel.name] = uiPanel.panel;
         }
     }
 
-    public void CrossOutCharacter(string characterName)
+    public void ShowPanel(string panelName)
     {
-        if (characterUIElements.TryGetValue(characterName, out GameObject charObj))
+        if (panelDictionary.TryGetValue(panelName, out GameObject panel))
         {
-            CharacterUI charUI = charObj.GetComponent<CharacterUI>();
-            charUI.ToggleCrossOut();
+            panel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning($"Panel {panelName} not found.");
         }
     }
 
-    public void HighlightCharacter(string characterName)
+    public void HidePanel(string panelName)
     {
-        if (characterUIElements.TryGetValue(characterName, out GameObject charObj))
+        if (panelDictionary.TryGetValue(panelName, out GameObject panel))
         {
-            CharacterUI charUI = charObj.GetComponent<CharacterUI>();
-            charUI.ToggleHighlight();
+            panel.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning($"Panel {panelName} not found.");
         }
     }
 
-    public void EnableSubmitQuestionButton(bool enable)
+    public void HideAllPanels()
     {
-        submitQuestionButton.interactable = enable;
+        foreach (var panel in panelDictionary.Values)
+        {
+            panel.SetActive(false);
+        }
     }
 
-    public void EnableAnswerButtons(bool enable)
+    public void UpdateTimer(float time)
     {
-        yesButton.interactable = enable;
-        noButton.interactable = enable;
+        timerText.text = $"Time: {time:F1}";
     }
 
-    public void EnableMakeGuessButton(bool enable)
+    public void UpdateGameState(GameManager.GameState state)
     {
-        makeGuessButton.interactable = enable;
+        stateText.text = $"State: {state}";
+        HideAllPanels();
+        switch (state)
+        {
+            case GameManager.GameState.WaitingForPlayers:
+                ShowPanel("WaitingPanel");
+                break;
+          //  case GameManager.GameState.ChoosingCharacter:
+            //    ShowPanel("CharacterSelectionPanel");
+              //  break;
+            case GameManager.GameState.AskingQuestions:
+                ShowPanel("QuestionPanel");
+                break;
+            case GameManager.GameState.AnsweringQuestions:
+                ShowPanel("AnswerPanel");
+                break;
+            case GameManager.GameState.DisplayingResults:
+                ShowPanel("ResultsPanel");
+                break;
+            case GameManager.GameState.GuessingCharacter:
+                ShowPanel("GuessPanel");
+                break;
+            case GameManager.GameState.GameOver:
+                ShowPanel("GameOverPanel");
+                break;
+        }
     }
 
-    public void ClearQuestionInput()
+    public void SetupCharacterSelection(List<string> characters)
     {
-        questionInput.text = "";
+        characterDropdown.ClearOptions();
+        characterDropdown.AddOptions(characters);
     }
 
-    // Add more UI-related methods as needed
+    public void SetupQuestionPanel(Action<string> onSubmitQuestion)
+    {
+        submitQuestionButton.onClick.RemoveAllListeners();
+        submitQuestionButton.onClick.AddListener(() => onSubmitQuestion(questionInput.text));
+    }
+
+    public void SetupAnswerPanel(string question, Action<bool> onSubmitAnswer)
+    {
+        questionText.text = question;
+        yesButton.onClick.RemoveAllListeners();
+        noButton.onClick.RemoveAllListeners();
+        yesButton.onClick.AddListener(() => onSubmitAnswer(true));
+        noButton.onClick.AddListener(() => onSubmitAnswer(false));
+    }
+
+    public void UpdateResults(string results)
+    {
+        resultsText.text = results;
+    }
+
+    public void SetupGuessPanel(Action<string> onSubmitGuess)
+    {
+        submitGuessButton.onClick.RemoveAllListeners();
+        submitGuessButton.onClick.AddListener(() => onSubmitGuess(guessInput.text));
+    }
 }

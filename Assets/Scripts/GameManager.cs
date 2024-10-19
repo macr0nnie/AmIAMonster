@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
+ 
+    private const int MAX_PLAYERS = 4;
     private const float ROUND_DURATION = 60f; // 1 minute per round
     
     public enum GameState { WaitingForPlayers, AskingQuestions, AnsweringQuestions, DisplayingResults, GuessingCharacter, GameOver }
