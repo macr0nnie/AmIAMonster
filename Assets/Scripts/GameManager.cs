@@ -7,11 +7,12 @@ public class GameManager : MonoBehaviourPunCallbacks
 {
  
     private const int MAX_PLAYERS = 4;
-    private const float ROUND_DURATION = 60f; // 1 minute per round
+    private const float ROUND_DURATION = 10f; // 1 minute per round (change this after playtesting)
     
-    public enum GameState { WaitingForPlayers, AskingQuestions, AnsweringQuestions, DisplayingResults, GuessingCharacter, GameOver }
+    //the different game state elements when adding or removing states change the 
+    public enum GameState { AskingQuestions, AnsweringQuestions, DisplayingResults, GuessingCharacter, GameOver } 
     
-    private GameState currentState = GameState.WaitingForPlayers;
+    private GameState currentState = GameState.AskingQuestions;
     private float roundTimer;
     private Dictionary<int, string> playerQuestions = new Dictionary<int, string>();
     private Dictionary<int, bool> playerAnswers = new Dictionary<int, bool>();
@@ -23,10 +24,12 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             StartGame();
         }
+      
     }
 
     private void Update()
     {
+
         if (PhotonNetwork.IsMasterClient)
         {
             UpdateGameState();
@@ -35,18 +38,29 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void StartGame()
     {
-        if (PhotonNetwork.CurrentRoom.PlayerCount >= 2)
+        Debug.Log("bro does the start game function even work?");
+        //i changed this value for testing should only start game if there are two players
+        if (PhotonNetwork.CurrentRoom.PlayerCount >= 0)
         {
+            Debug.Log("GM: Starting game");
             photonView.RPC("SetGameState", RpcTarget.All, (int)GameState.AskingQuestions);
         }
+        else{
+             Debug.Log("hmm strange there are no players in this room"); //check if the gamestate does not work
+        }
+       
     }
 
+    //GM script works just need to enter the user name and all that fun fist <3
     private void UpdateGameState()
     {
         roundTimer -= Time.deltaTime;
 
         if (roundTimer <= 0)
-        {
+        {   
+            Debug.Log("GM: Time's up! Moving to the next state.");
+            Debug.Log(currentState);
+
             switch (currentState)
             {
                 case GameState.AskingQuestions:

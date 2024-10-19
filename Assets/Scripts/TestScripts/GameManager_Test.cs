@@ -35,9 +35,6 @@ public class GameManager_Test : MonoBehaviourPunCallbacks
         yield return new WaitUntil(() => PhotonNetwork.InRoom);
         Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.Name}");
 
-        // Wait for the game to start
-        yield return new WaitUntil(() => gameManager.GetCurrentState() != GameManager.GameState.WaitingForPlayers);
-        Debug.Log("Game started");
 
         // Simulate game flow
         while (gameManager.GetCurrentState() != GameManager.GameState.GameOver)
