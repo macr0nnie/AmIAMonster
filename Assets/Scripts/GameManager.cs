@@ -50,7 +50,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
        
     }
-
     //GM script works just need to enter the user name and all that fun fist <3
     private void UpdateGameState()
     {
@@ -58,9 +57,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         if (roundTimer <= 0)
         {   
-            Debug.Log("GM: Time's up! Moving to the next state.");
-            Debug.Log(currentState);
-
             switch (currentState)
             {
                 case GameState.AskingQuestions:
@@ -84,6 +80,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         currentState = (GameState)newState;
         roundTimer = ROUND_DURATION;
+        //let me know the state has changed
+        Debug.Log("GM: State changed to " + currentState);
 
         if (currentState == GameState.AskingQuestions)
         {
