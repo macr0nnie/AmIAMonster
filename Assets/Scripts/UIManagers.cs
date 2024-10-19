@@ -5,21 +5,25 @@ using UnityEngine;
 public class UIManagers : MonoBehaviour
 {
 
-    //instance of the gamemanger
-   public static GameManager instance;
-   public GameObject answer_panel;
-   public GameObject question_panel;
-   public GameObject character_grid;
-   public GameObject character_notes;
-   public GameObject game_over_panel;
+   public GameObject answer_panel; //synced to everyone
+   public GameObject question_panel; //synced to everyone
+   public GameObject character_grid; //synced to everyone
+   public GameObject character_notes; //not synced everyone has different notes 
+   public GameObject game_over_panel; //synced to everyone but the winner gets a different message and different background color
+   public GameObject playerlist; //individual players are able to check who is in the lobby by hitting tab
+   public GameObject settings; //hitting esc will bring up the settings menu 
+   
+    //update global UI
+    //when the game state changes from the game manager all players are displayed UI for that state
+    
+    //UI that is not affected by game state, indivial displays
+  
+   
 
-    //display the correspoding panel according to the gamemanager state
-    void displayUIPanels()
+
+
+    void Start()
     {
-        answer_panel.SetActive(true);
-        question_panel.SetActive(true);
-        character_grid.SetActive(true);
-        character_notes.SetActive(true);
+        
     }
-
 }
