@@ -1,29 +1,131 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using System.Collections.Generic;
 
-public class UIManagers : MonoBehaviour
+public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance { get; private set; }
 
-   public GameObject answer_panel; //synced to everyone
-   public GameObject question_panel; //synced to everyone
-   public GameObject character_grid; //synced to everyone
-   public GameObject character_notes; //not synced everyone has different notes 
-   public GameObject game_over_panel; //synced to everyone but the winner gets a different message and different background color
-   public GameObject playerlist; //individual players are able to check who is in the lobby by hitting tab
-   public GameObject settings; //hitting esc will bring up the settings menu 
-   
-    //update global UI
-    //when the game state changes from the game manager all players are displayed UI for that state
-    
-    //UI that is not affected by game state, indivial displays
-  
-   
+    [Header("Panels")]
+    public GameObject startPanel;
+    public GameObject questionPanel;
+    public GameObject answerPanel;
+    public GameObject guessSelectionPanel;
+    public GameObject characterGridPanel;
 
+    [Header("Input Fields")]
+    public TMP_InputField questionInput;
 
+    [Header("Text Displays")]
+    public TMP_Text currentPlayerText;
+    public TMP_Text questionDisplayText;
+    public TMP_Text timerText;
 
-    void Start()
+    [Header("Buttons")]
+    public Button submitQuestionButton;
+    public Button yesButton;
+    public Button noButton;
+    public Button makeGuessButton;
+
+    [Header("Character Grid")]
+    public GameObject characterPrefab;
+    public Transform characterGridContainer;
+
+    private Dictionary<string, GameObject> characterUIElements = new Dictionary<string, GameObject>();
+
+    private void Awake()
     {
-        
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
+
+    public void ShowPanel(GameObject panel)
+    {
+        startPanel.SetActive(panel == startPanel);
+        questionPanel.SetActive(panel == questionPanel);
+        answerPanel.SetActive(panel == answerPanel);
+        guessSelectionPanel.SetActive(panel == guessSelectionPanel);
+        characterGridPanel.SetActive(panel == characterGridPanel);
+    }
+
+    public void UpdateCurrentPlayerText(string playerName)
+    {
+        currentPlayerText.text = $"Current Player: {playerName}";
+    }
+
+    public void DisplayQuestion(string question)
+    {
+        questionDisplayText.text = question;
+    }
+
+    public void UpdateTimer(float timeLeft)
+    {
+        timerText.text = $"Time: {Mathf.CeilToInt(timeLeft)}";
+    }
+
+    public void PopulateCharacterGrid(List<Character> characters)
+    {
+        foreach (Transform child in characterGridContainer)
+        {
+            Destroy(child.gameObject);
+        }
+        characterUIElements.Clear();
+
+        foreach (var character in characters)
+        {
+            GameObject charObj = Instantiate(characterPrefab, characterGridContainer);
+            CharacterUI charUI = charObj.GetComponent<CharacterUI>();
+            charUI.Initialize(character);
+            characterUIElements[character.Name] = charObj;
+        }
+    }
+
+    public void CrossOutCharacter(string characterName)
+    {
+        if (characterUIElements.TryGetValue(characterName, out GameObject charObj))
+        {
+            CharacterUI charUI = charObj.GetComponent<CharacterUI>();
+            charUI.ToggleCrossOut();
+        }
+    }
+
+    public void HighlightCharacter(string characterName)
+    {
+        if (characterUIElements.TryGetValue(characterName, out GameObject charObj))
+        {
+            CharacterUI charUI = charObj.GetComponent<CharacterUI>();
+            charUI.ToggleHighlight();
+        }
+    }
+
+    public void EnableSubmitQuestionButton(bool enable)
+    {
+        submitQuestionButton.interactable = enable;
+    }
+
+    public void EnableAnswerButtons(bool enable)
+    {
+        yesButton.interactable = enable;
+        noButton.interactable = enable;
+    }
+
+    public void EnableMakeGuessButton(bool enable)
+    {
+        makeGuessButton.interactable = enable;
+    }
+
+    public void ClearQuestionInput()
+    {
+        questionInput.text = "";
+    }
+
+    // Add more UI-related methods as needed
 }
